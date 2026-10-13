@@ -1,0 +1,23 @@
+﻿@inherits LayoutComponentBase
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <span>StockFlow <span class="text-muted">/ Gestión de inventario</span></span>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    Se interrumpió la conexión. Recargá para continuar.
+    <a href="." class="reload">Recargar</a>
+    <span class="dismiss">🗙</span>
+</div>

@@ -1,0 +1,12 @@
+services:
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${STOCKFLOW_SQL_PASSWORD:?Definir STOCKFLOW_SQL_PASSWORD}"
+    ports:
+      - "127.0.0.1:1433:1433"
+    volumes:
+      - stockflow-sql:/var/opt/mssql
+volumes:
+  stockflow-sql:

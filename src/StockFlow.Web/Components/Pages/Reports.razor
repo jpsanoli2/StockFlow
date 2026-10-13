@@ -1,0 +1,27 @@
+@page "/reportes"
+@attribute [Authorize(Roles = "Admin,Operator,Viewer")]
+@inherits InventoryPageBase
+@inject IJSRuntime JS
+<PageTitle>Reportes · StockFlow</PageTitle><h1>Reportes</h1><p class="text-muted">Ventas por período e inventario valorizado. Importes expresados en una única unidad monetaria.</p><Feedback Error="@Error" Success="@Success" />
+<div class="panel"><h2>Ventas</h2><div class="form-grid"><label>Desde (UTC)<input class="form-control" type="date" @bind="from" /></label><label>Hasta inclusive (UTC)<input class="form-control" type="date" @bind="to" /></label></div>
+@if (from.Date > to.Date) { <div class="alert alert-warning">La fecha inicial debe ser anterior o igual a la final.</div> }
+<div class="metrics"><div class="metric"><span>Pedidos</span><strong>@Sales.Count()</strong></div><div class="metric"><span>Total vendido</span><strong>@Sales.Sum(x => x.Total).ToString("N2")</strong></div><div class="metric"><span>Ticket promedio</span><strong>@(Sales.Any() ? Sales.Average(x => x.Total).ToString("N2") : "0,00")</strong></div></div>
+<button class="btn btn-outline-primary" @onclick="ExportSales" disabled="@(Busy || from.Date > to.Date)">Exportar ventas CSV</button>
+<div class="table-responsive"><table class="table"><thead><tr><th>Día UTC</th><th>Pedidos</th><th>Total</th></tr></thead><tbody>
+@foreach (var day in Sales.GroupBy(x => x.CreatedAt.Date).OrderByDescending(x => x.Key)) { <tr><td>@day.Key.ToString("yyyy-MM-dd")</td><td>@day.Count()</td><td>@day.Sum(x => x.Total).ToString("N2")</td></tr> }
+</tbody></table></div><h3>Productos más vendidos</h3><table class="table"><thead><tr><th>SKU</th><th>Producto</th><th>Unidades</th><th>Importe</th></tr></thead><tbody>
+@foreach (var group in Sales.SelectMany(x => x.Lines).GroupBy(x => x.ProductId).OrderByDescending(x => x.Sum(l => l.Quantity)).Take(10))
+{ <tr><td>@group.First().Sku</td><td>@group.First().ProductName</td><td>@group.Sum(x => x.Quantity)</td><td>@group.Sum(x => x.Subtotal).ToString("N2")</td></tr> }
+</tbody></table></div>
+<div class="panel"><h2>Inventario valorizado</h2><label><input type="checkbox" @bind="lowOnly" /> Solo stock bajo</label><button class="btn btn-outline-primary" disabled="@Busy" @onclick="ExportInventory">Exportar inventario CSV</button>
+<div class="table-responsive"><table class="table"><thead><tr><th>SKU</th><th>Producto</th><th>Categoría</th><th>Stock</th><th>Valor</th></tr></thead><tbody>
+@foreach (var p in Stock) { <tr><td>@p.Sku</td><td>@p.Name</td><td>@p.Category?.Name</td><td>@p.Stock</td><td>@((p.Price * p.Stock).ToString("N2"))</td></tr> }
+</tbody></table></div><strong>Total: @Stock.Sum(x => x.Price * x.Stock).ToString("N2")</strong></div>
+@code {
+    List<Product> products = []; List<Order> orders = []; DateTime from = DateTime.UtcNow.Date.AddDays(-30); DateTime to = DateTime.UtcNow.Date; bool lowOnly;
+    IEnumerable<Order> Sales => orders.Where(x => x.CreatedAt.Date >= from.Date && x.CreatedAt.Date <= to.Date);
+    IEnumerable<Product> Stock => products.Where(x => !lowOnly || x.Stock <= x.MinimumStock);
+    protected override async Task OnInitializedAsync() => await RunAsync(async () => { products = await Inventory.ProductsAsync(); orders = await Inventory.OrdersAsync(); });
+    async Task ExportSales() => await RunAsync(async () => await JS.InvokeVoidAsync("stockFlow.download", "stockflow-ventas.csv", CsvExporter.Sales(Sales)));
+    async Task ExportInventory() => await RunAsync(async () => await JS.InvokeVoidAsync("stockFlow.download", "stockflow-inventario.csv", CsvExporter.Inventory(Stock)));
+}

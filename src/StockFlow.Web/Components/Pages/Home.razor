@@ -1,0 +1,27 @@
+@page "/"
+@attribute [Authorize(Roles = "Admin,Operator,Viewer")]
+@inherits InventoryPageBase
+<PageTitle>Dashboard · StockFlow</PageTitle>
+<div class="eyebrow">CONTROL DE INVENTARIO</div><h1>Tu operación, en un vistazo.</h1>
+<p class="text-muted">Existencias, ventas y alertas para decidir a tiempo.</p><Feedback Error="@Error" />
+@if (products != null)
+{
+    <div class="metrics">
+        <div class="metric"><span>Productos</span><strong>@products.Count</strong></div>
+        <div class="metric"><span>Valor del inventario</span><strong>@products.Sum(x => x.Price * x.Stock).ToString("N2")</strong></div>
+        <div class="metric"><span>Ventas registradas</span><strong>@orders.Sum(x => x.Total).ToString("N2")</strong></div>
+        <div class="metric warning"><span>Alertas de stock</span><strong>@products.Count(x => x.Stock <= x.MinimumStock)</strong></div>
+    </div>
+    <div class="panel"><h2>Reposición pendiente</h2><table class="table"><thead><tr><th>Producto</th><th>SKU</th><th>Disponible</th><th>Mínimo</th></tr></thead><tbody>
+    @foreach (var p in products.Where(x => x.Stock <= x.MinimumStock))
+    { <tr><td>@p.Name</td><td>@p.Sku</td><td><span class="badge text-bg-warning">@p.Stock</span></td><td>@p.MinimumStock</td></tr> }
+    </tbody></table>@if (products.All(x => x.Stock > x.MinimumStock)) { <p>No hay productos por debajo del mínimo.</p> }</div>
+    <div class="panel"><h2>Últimos pedidos</h2>
+    @foreach (var o in orders.Take(5)) { <div class="summary-row"><span>#@o.Id · @o.Customer</span><strong>@o.Total.ToString("N2")</strong></div> }
+    @if (orders.Count == 0) { <p>Todavía no hay ventas. Creá tu primer pedido.</p> }<a href="pedidos">Ver pedidos →</a></div>
+}
+else if (Error == null) { <p>Cargando indicadores…</p> }
+@code {
+    List<Product>? products; List<Order> orders = [];
+    protected override async Task OnInitializedAsync() => await RunAsync(async () => { products = await Inventory.ProductsAsync(); orders = await Inventory.OrdersAsync(); });
+}

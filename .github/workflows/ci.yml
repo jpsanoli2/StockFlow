@@ -1,0 +1,38 @@
+name: Build y tests
+on:
+  push:
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      sql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: StockFlow-CI!2026
+        ports:
+          - 1433:1433
+    env:
+      STOCKFLOW_TEST_SQL: "Server=localhost,1433;User Id=sa;Password=StockFlow-CI!2026;TrustServerCertificate=True"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Esperar SQL Server
+        shell: bash
+        run: |
+          for attempt in {1..60}; do
+            if docker exec ${{ job.services.sql.id }} /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'StockFlow-CI!2026' -C -Q 'SELECT 1' >/dev/null 2>&1; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+      - run: dotnet restore StockFlow.sln
+      - run: dotnet build StockFlow.sln -c Release --no-restore
+      - run: dotnet test StockFlow.sln -c Release --no-build --logger trx --results-directory TestResults
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: resultados-tests
+          path: TestResults

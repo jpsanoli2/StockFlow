@@ -1,0 +1,9 @@
+
+.page { display: flex; min-height: 100vh; }
+.sidebar { width: 245px; background: #132b3d; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow: auto; }
+main { flex: 1; min-width: 0; }
+.top-row { height: 65px; border-bottom: 1px solid #dfe6eb; background: white; display: flex; align-items: center; font-weight: 600; }
+.content { padding-top: 2.5rem; padding-bottom: 3rem; max-width: 1500px; margin: auto; }
+#blazor-error-ui { background: #ffe9a9; bottom: 0; display: none; left: 0; padding: .8rem 1.5rem; position: fixed; width: 100%; z-index: 1000; }
+#blazor-error-ui .dismiss { cursor: pointer; position: absolute; right: 1rem; top: .5rem; }
+@media(max-width: 800px) { .page { flex-direction: column; } .sidebar { width: 100%; height: auto; position: static; } .content { padding: 1.5rem !important; } }

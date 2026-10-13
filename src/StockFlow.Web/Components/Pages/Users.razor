@@ -1,0 +1,14 @@
+@page "/usuarios"
+@attribute [Authorize(Roles = "Admin")]
+@inherits InventoryPageBase
+@inject UserAdminService Admin
+<PageTitle>Usuarios · StockFlow</PageTitle><h1>Usuarios y permisos</h1><p class="text-muted">Los nuevos registros reciben Viewer. Después de un cambio de rol, el usuario debe cerrar sesión y volver a entrar.</p><Feedback Error="@Error" Success="@Success" />
+<div class="panel table-responsive"><table class="table"><thead><tr><th>Email</th><th>Rol actual</th><th>Asignar rol</th><th></th></tr></thead><tbody>
+@foreach (var u in users) { <tr><td>@u.Email</td><td>@u.Role</td><td><select class="form-select" @bind="roles[u.Id]"><option>Viewer</option><option>Operator</option><option>Admin</option></select></td><td><button class="btn btn-outline-primary" disabled="@Busy" @onclick="() => Save(u.Id)">Guardar</button></td></tr> }
+</tbody></table></div>
+@code {
+    List<UserRoleRow> users = []; Dictionary<string, string> roles = [];
+    protected override async Task OnInitializedAsync() => await RunAsync(Load);
+    async Task Load() { users = await Admin.ListAsync(); roles = users.ToDictionary(x => x.Id, x => x.Role.Split(',')[0].Trim()); }
+    async Task Save(string id) => await RunAsync(async () => { await Admin.SetRoleAsync(id, roles[id]); await Load(); }, "Permisos actualizados.");
+}

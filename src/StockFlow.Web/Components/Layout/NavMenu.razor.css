@@ -1,0 +1,8 @@
+
+.brand { padding: 2rem 1.5rem; }
+.brand a { color: white; text-decoration: none; font-size: 1.6rem; font-weight: 800; }
+.brand small { display: block; color: #8da8bf; font-size: .65rem; letter-spacing: .15em; margin-top: .5rem; }
+.stock-nav { padding: 0 1rem; }
+.stock-nav ::deep a, .stock-nav button { display: block; width: 100%; padding: .85rem 1rem; margin-bottom: .3rem; border: 0; border-radius: 8px; color: #c5d5e3; background: transparent; text-decoration: none; text-align: left; font-size: .92rem; overflow-wrap: anywhere; }
+.stock-nav ::deep a.active, .stock-nav ::deep a:hover, .stock-nav button:hover { background: #224657; color: #76e0c1; }
+.nav-divider { height: 1px; background: #345064; margin: 1.5rem 0; }

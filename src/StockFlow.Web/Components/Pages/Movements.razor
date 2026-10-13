@@ -1,0 +1,18 @@
+@page "/movimientos"
+@attribute [Authorize(Roles = "Admin,Operator,Viewer")]
+@inherits InventoryPageBase
+<PageTitle>Movimientos · StockFlow</PageTitle><h1>Movimientos de stock</h1><p class="text-muted">Trazabilidad de entradas, salidas y ventas.</p><Feedback Error="@Error" Success="@Success" />
+<AuthorizeView Roles="Admin,Operator"><div class="panel"><h2>Entrada o ajuste</h2><div class="form-grid">
+<label>Producto<select class="form-select" @bind="productId"><option value="0">Seleccionar</option>@foreach (var p in products) { <option value="@p.Id">@p.Name · stock @p.Stock</option> }</select></label>
+<label>Cantidad (negativa para salida)<input class="form-control" type="number" @bind="quantity" @bind:event="oninput" /></label><label>Motivo<input class="form-control" maxlength="200" @bind="reason" @bind:event="oninput" /></label></div>
+<button class="btn btn-primary" disabled="@Busy" @onclick="Save">Registrar movimiento</button></div></AuthorizeView>
+<div class="panel"><label>Buscar producto o motivo<input class="form-control" @bind="search" @bind:event="oninput" /></label><div class="table-responsive"><table class="table"><thead><tr><th>Fecha UTC</th><th>Producto</th><th>Variación</th><th>Saldo</th><th>Motivo</th><th>Usuario</th><th>Pedido</th></tr></thead><tbody>
+@foreach (var m in movements.Where(x => (x.Product?.Name ?? "").Contains(search, StringComparison.OrdinalIgnoreCase) || x.Reason.Contains(search, StringComparison.OrdinalIgnoreCase)))
+{ <tr><td>@m.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td><td>@m.Product?.Name</td><td class="@(m.Quantity < 0 ? "text-danger" : "text-success")">@m.Quantity.ToString("+0;-0")</td><td>@m.Balance</td><td>@m.Reason</td><td>@m.CreatedBy</td><td>@m.OrderId</td></tr> }
+</tbody></table></div>@if (movements.Count == 0) { <p>No hay movimientos.</p> }</div>
+@code {
+    List<Product> products = []; List<StockMovement> movements = []; int productId; int quantity; string reason = ""; string search = "";
+    protected override async Task OnInitializedAsync() => await RunAsync(Load);
+    async Task Load() { products = await Inventory.ProductsAsync(); movements = await Inventory.MovementsAsync(); }
+    async Task Save() => await RunAsync(async () => { await Inventory.AdjustStockAsync(productId, quantity, reason); quantity = 0; reason = ""; await Load(); }, "Movimiento registrado.");
+}

@@ -1,0 +1,31 @@
+
+:root { --ink: #162d40; --teal: #087d68; }
+html, body { font-family: "Segoe UI", Arial, sans-serif; background: #f3f6f8; color: var(--ink); }
+h1 { font-size: 2rem; font-weight: 750; letter-spacing: -.04em; margin-bottom: .75rem; }
+h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 1.25rem; }
+h3 { font-size: 1rem; font-weight: 700; margin-top: 1.5rem; }
+a { color: var(--teal); }
+.eyebrow { color: var(--teal); font-size: .7rem; letter-spacing: .15em; font-weight: 700; margin-bottom: .6rem; }
+.panel { border: 1px solid #e1e7ec; border-radius: 12px; background: white; padding: 1.5rem; margin: 1.5rem 0; box-shadow: 0 3px 10px #132b3d04; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.metric { background: white; border: 1px solid #e1e7ec; border-radius: 12px; padding: 1.3rem; }
+.metric span { color: #607587; font-size: .85rem; display: block; }
+.metric strong { display: block; font-size: 1.85rem; margin-top: .5rem; }
+.metric.warning { background: #fff8e9; border-color: #f6dc9d; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 1rem; }
+label { display: inline-block; margin-bottom: 1rem; font-size: .9rem; color: #435c70; }
+label .form-control, label .form-select { margin-top: .4rem; }
+.btn { margin-right: .4rem; margin-bottom: .3rem; }
+.btn-primary { background: var(--teal); border-color: var(--teal); }
+.btn-primary:hover { background: #06604f; border-color: #06604f; }
+.btn-outline-primary { color: var(--teal); border-color: var(--teal); }
+.btn-outline-primary:hover { background: var(--teal); border-color: var(--teal); }
+.table { vertical-align: middle; margin-top: 1rem; font-size: .9rem; }
+.table th { color: #64788b; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; background: #f7f9fb; padding: .8rem; }
+.table td { padding: .85rem .8rem; }
+.summary-row { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid #edf0f3; padding: .8rem 0; }
+.validation-message, .invalid { color: #b42318; }
+.invalid { outline: 1px solid #b42318; }
+.valid.modified:not([type=checkbox]) { outline: 1px solid #159c7d; }
+h1:focus { outline: none; }
+.status-message { margin-bottom: 1rem; }

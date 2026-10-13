@@ -1,0 +1,27 @@
+@page "/productos"
+@attribute [Authorize(Roles = "Admin,Operator,Viewer")]
+@inherits InventoryPageBase
+<PageTitle>Productos · StockFlow</PageTitle><h1>Productos</h1><p class="text-muted">Catálogo, precios y existencias. Los cambios de stock se registran en Movimientos.</p><Feedback Error="@Error" Success="@Success" />
+<AuthorizeView Roles="Admin,Operator"><div class="panel"><h2>@(model.Id == 0 ? "Nuevo producto" : "Editar producto")</h2>
+<EditForm Context="editContext" Model="model" OnValidSubmit="Save" FormName="product"><DataAnnotationsValidator /><ValidationSummary /><div class="form-grid">
+<label>SKU<input class="form-control" @bind="model.Sku" @bind:event="oninput" /></label><label>Nombre<input class="form-control" @bind="model.Name" @bind:event="oninput" /></label>
+<label>Categoría<InputSelect class="form-select" @bind-Value="model.CategoryId"><option value="0">Seleccionar</option>@foreach (var c in categories) { <option value="@c.Id">@c.Name</option> }</InputSelect></label>
+<label>Precio<input type="number" class="form-control" @bind="model.Price" @bind:event="oninput" step="0.01" min="0.01" max="99999999" /></label>
+<label>Stock inicial<input type="number" class="form-control" @bind="model.Stock" @bind:event="oninput" disabled="@(model.Id != 0)" min="0" max="1000000" /></label><label>Stock mínimo<input type="number" class="form-control" @bind="model.MinimumStock" @bind:event="oninput" min="0" max="1000000" /></label>
+</div><button class="btn btn-primary" disabled="@Busy">Guardar</button><button class="btn btn-outline-secondary" type="button" @onclick="() => model = new()">Cancelar</button></EditForm></div></AuthorizeView>
+<div class="panel"><label class="w-100">Buscar nombre o SKU<input class="form-control" @bind="search" @bind:event="oninput" placeholder="Buscar en el catálogo…" /></label>
+<div class="table-responsive"><table class="table"><thead><tr><th>SKU</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead><tbody>
+@foreach (var p in Filtered) { <tr><td>@p.Sku</td><td>@p.Name</td><td>@p.Category?.Name</td><td>@p.Price.ToString("N2")</td><td><span class="@(p.Stock <= p.MinimumStock ? "badge text-bg-warning" : "badge text-bg-success")">@p.Stock</span></td><td>
+<AuthorizeView Roles="Admin,Operator"><button class="btn btn-sm btn-outline-primary" disabled="@Busy" @onclick="() => Edit(p)">Editar</button></AuthorizeView>
+<AuthorizeView Roles="Admin"><button class="btn btn-sm btn-outline-danger" disabled="@Busy" @onclick="() => deleting = p.Id">Eliminar</button></AuthorizeView>
+</td></tr> }</tbody></table></div>@if (!Filtered.Any()) { <p>No hay productos que coincidan.</p> }</div>
+@if (deleting != null) { <div class="alert alert-warning">¿Eliminar el producto? El historial asociado impide borrarlo. <button class="btn btn-danger" disabled="@Busy" @onclick="Delete">Confirmar</button><button class="btn" @onclick="() => deleting = null">Cancelar</button></div> }
+@code {
+    Product model = new(); List<Product> products = []; List<Category> categories = []; string search = ""; int? deleting;
+    IEnumerable<Product> Filtered => products.Where(p => p.Name.Contains(search, StringComparison.OrdinalIgnoreCase) || p.Sku.Contains(search, StringComparison.OrdinalIgnoreCase));
+    protected override async Task OnInitializedAsync() => await RunAsync(Load);
+    async Task Load() { products = await Inventory.ProductsAsync(); categories = await Inventory.CategoriesAsync(); }
+    void Edit(Product p) => model = new() { Id = p.Id, Sku = p.Sku, Name = p.Name, Price = p.Price, Stock = p.Stock, MinimumStock = p.MinimumStock, CategoryId = p.CategoryId, Version = p.Version.ToArray() };
+    async Task Save() => await RunAsync(async () => { await Inventory.SaveProductAsync(model); model = new(); await Load(); }, "Producto guardado.");
+    async Task Delete() => await RunAsync(async () => { await Inventory.DeleteProductAsync(deleting!.Value); deleting = null; await Load(); }, "Producto eliminado.");
+}

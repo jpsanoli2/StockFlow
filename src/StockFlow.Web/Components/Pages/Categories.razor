@@ -1,0 +1,24 @@
+@page "/categorias"
+@attribute [Authorize(Roles = "Admin,Operator,Viewer")]
+@inherits InventoryPageBase
+<PageTitle>Categorías · StockFlow</PageTitle><h1>Categorías</h1><p class="text-muted">Organizá tu catálogo.</p><Feedback Error="@Error" Success="@Success" />
+<AuthorizeView Roles="Admin"><div class="panel"><h2>@(model.Id == 0 ? "Nueva categoría" : "Editar categoría")</h2>
+<EditForm Context="editContext" Model="model" OnValidSubmit="Save" FormName="category"><DataAnnotationsValidator /><ValidationSummary />
+<label>Nombre<input class="form-control" @bind="model.Name" @bind:event="oninput" /></label>
+<label>Descripción<input class="form-control" @bind="model.Description" @bind:event="oninput" /></label>
+<button class="btn btn-primary" disabled="@Busy">Guardar</button><button type="button" class="btn btn-outline-secondary" @onclick="() => model = new()">Cancelar</button>
+</EditForm></div></AuthorizeView>
+<div class="panel table-responsive"><table class="table"><thead><tr><th>Nombre</th><th>Descripción</th><th>Acciones</th></tr></thead><tbody>
+@foreach (var c in categories) { <tr><td>@c.Name</td><td>@c.Description</td><td><AuthorizeView Roles="Admin">
+<button class="btn btn-sm btn-outline-primary" @onclick="() => Edit(c)" disabled="@Busy">Editar</button>
+<button class="btn btn-sm btn-outline-danger" @onclick="() => deleting = c.Id" disabled="@Busy">Eliminar</button></AuthorizeView></td></tr> }
+</tbody></table>@if (categories.Count == 0) { <p>No hay categorías.</p> }</div>
+@if (deleting != null) { <div class="alert alert-warning">¿Eliminar esta categoría? <button class="btn btn-danger" disabled="@Busy" @onclick="Delete">Confirmar</button><button class="btn" @onclick="() => deleting = null">Cancelar</button></div> }
+@code {
+    Category model = new(); List<Category> categories = []; int? deleting;
+    protected override async Task OnInitializedAsync() => await RunAsync(Load);
+    async Task Load() => categories = await Inventory.CategoriesAsync();
+    void Edit(Category c) => model = new() { Id = c.Id, Name = c.Name, Description = c.Description };
+    async Task Save() => await RunAsync(async () => { await Inventory.SaveCategoryAsync(model); model = new(); await Load(); }, "Categoría guardada.");
+    async Task Delete() => await RunAsync(async () => { await Inventory.DeleteCategoryAsync(deleting!.Value); deleting = null; await Load(); }, "Categoría eliminada.");
+}

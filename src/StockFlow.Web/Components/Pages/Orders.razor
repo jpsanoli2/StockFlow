@@ -1,0 +1,33 @@
+@page "/pedidos"
+@attribute [Authorize(Roles = "Admin,Operator,Viewer")]
+@inherits InventoryPageBase
+<PageTitle>Pedidos · StockFlow</PageTitle><h1>Pedidos</h1><p class="text-muted">Cada venta descuenta stock y genera sus movimientos en una sola transacción.</p><Feedback Error="@Error" Success="@Success" />
+<AuthorizeView Roles="Admin,Operator"><div class="panel"><h2>Nuevo pedido</h2><label class="w-100">Cliente<input class="form-control" @bind="customer" @bind:event="oninput" maxlength="120" /></label>
+<div class="form-grid"><label>Producto<select class="form-select" @bind="productId"><option value="0">Seleccionar</option>@foreach (var p in products) { <option value="@p.Id">@p.Name · @p.Stock disponibles · @p.Price.ToString("N2")</option> }</select></label>
+<label>Cantidad<input type="number" min="1" max="1000000" class="form-control" @bind="quantity" @bind:event="oninput" /></label></div><button class="btn btn-outline-primary" disabled="@Busy" @onclick="Add">Agregar al pedido</button>
+<table class="table"><thead><tr><th>Producto</th><th>Cantidad</th><th>Subtotal estimado</th><th></th></tr></thead><tbody>
+@foreach (var item in cart) { var p = products.First(x => x.Id == item.ProductId); <tr><td>@p.Name</td><td>@item.Quantity</td><td>@((item.Quantity * p.Price).ToString("N2"))</td><td><button class="btn btn-sm btn-outline-danger" disabled="@Busy" @onclick="() => cart.Remove(item)">Quitar</button></td></tr> }
+</tbody></table><p>Total estimado: <strong>@cart.Sum(x => x.Quantity * products.First(p => p.Id == x.ProductId).Price).ToString("N2")</strong></p>
+<button class="btn btn-primary" disabled="@(Busy || cart.Count == 0)" @onclick="Save">Confirmar pedido</button><small class="d-block mt-2 text-muted">El precio vigente se confirma al guardar. Pedidos confirmados conservan su precio e historial.</small></div></AuthorizeView>
+<div class="panel table-responsive"><h2>Historial de pedidos</h2><table class="table"><thead><tr><th>N.º</th><th>Fecha UTC</th><th>Cliente</th><th>Total</th><th></th></tr></thead><tbody>
+@foreach (var o in orders) { <tr><td>#@o.Id</td><td>@o.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td><td>@o.Customer</td><td>@o.Total.ToString("N2")</td><td><button class="btn btn-sm btn-outline-primary" @onclick="() => selected = selected == o.Id ? null : o.Id">Detalle</button></td></tr>
+@if (selected == o.Id) { <tr><td colspan="5"><p>Registrado por @o.CreatedBy</p>@foreach (var l in o.Lines) { <div class="summary-row"><span>@l.Sku · @l.ProductName × @l.Quantity · @l.UnitPrice.ToString("N2")</span><strong>@l.Subtotal.ToString("N2")</strong></div> }</td></tr> }
+}</tbody></table>@if (orders.Count == 0) { <p>No hay pedidos registrados.</p> }</div>
+@code {
+    List<Product> products = []; List<Order> orders = []; List<OrderItem> cart = [];
+    string customer = ""; int productId; int quantity = 1; int? selected; Guid requestId = Guid.NewGuid();
+    protected override async Task OnInitializedAsync() => await RunAsync(Load);
+    async Task Load() { products = await Inventory.ProductsAsync(); orders = await Inventory.OrdersAsync(); }
+    void Add() {
+        Error = null; Success = null;
+        var product = products.FirstOrDefault(x => x.Id == productId);
+        if (product == null || quantity < 1 || quantity > 1000000) { Error = "Seleccioná un producto y una cantidad válida."; return; }
+        if (cart.Where(x => x.ProductId == productId).Sum(x => (long)x.Quantity) + quantity > product.Stock) { Error = "Stock insuficiente."; return; }
+        if (cart.Count >= 100) { Error = "Máximo 100 líneas por pedido."; return; }
+        cart.Add(new(productId, quantity)); quantity = 1;
+    }
+    async Task Save() => await RunAsync(async () => {
+        var id = await Inventory.CreateOrderAsync(customer, cart, requestId);
+        cart.Clear(); customer = ""; requestId = Guid.NewGuid(); await Load(); selected = id;
+    }, "Pedido confirmado y stock actualizado.");
+}

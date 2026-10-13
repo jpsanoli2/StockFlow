@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+.vs/
+.idea/
+*.user
+*.suo
+TestResults/
+*.mdf
+*.ldf
+*.db
+.env
+**/appsettings.Local.json
+artifacts/
+
+docs/*.trx
