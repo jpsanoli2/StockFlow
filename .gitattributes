@@ -1,2 +1,5 @@
 # Exclude bundled third-party libraries from GitHub language statistics.
 src/StockFlow.Web/wwwroot/lib/** linguist-vendored
+
+# Blazor Razor components combine markup and C#; group them with the C# app.
+*.razor linguist-language=C#

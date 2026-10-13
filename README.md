@@ -165,6 +165,8 @@ tests/StockFlow.Tests/    Tests unitarios y de integración SQL
 
 Los componentes usan un contexto por operación mediante `IDbContextFactory`, para no compartir un DbContext durante un circuito Blazor. Las reglas de negocio y la autorización están en los servicios; ocultar un botón no concede ni revoca permisos. Las operaciones de stock son transaccionales, los precios se copian al pedido y los índices únicos protegen SKU y solicitudes.
 
+Las estadísticas de GitHub excluyen las bibliotecas de terceros de `wwwroot/lib/` y agrupan los componentes Blazor `.razor` bajo C#. Estos componentes combinan marcado de interfaz y código C#; el ajuste de clasificación no modifica los archivos ni su ejecución.
+
 ## Configuración y despliegue
 
 La conexión local está en `appsettings.json`. Las variables de entorno `ConnectionStrings__DefaultConnection`, `Seed__AdminEmail` y `Seed__AdminPassword` permiten sustituirla sin subir secretos a GitHub. También podés usar `dotnet user-secrets` durante desarrollo.
