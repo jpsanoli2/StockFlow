@@ -1,0 +1,2 @@
+# Exclude bundled third-party libraries from GitHub language statistics.
+src/StockFlow.Web/wwwroot/lib/** linguist-vendored
